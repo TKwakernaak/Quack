@@ -35,7 +35,7 @@ Kunnen worden toegevoegd, net als in ASP.net API's
 [Parameter]
 public int Id {get;set;}
 }
-```c#
+```
 
 of inline:
 
