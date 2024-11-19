@@ -1,0 +1,210 @@
+﻿  ```yaml
+   ---
+   title: "Expression trees introduction"
+   date: 2024-19-11
+   ---
+   ```
+
+# Expression trees
+
+# Introductie
+
+### Functies, delegates en expressies.
+
+**delegates**
+
+Een delegate is een type die een methode encapsuleert. Je kunt dit zien als een pointer naar een functie.
+
+Voorbeeld:
+
+```csharp
+	public delegate void Del(string message);
+
+	//create a method for a delate
+	public void DelegateMethod(string input)
+	{
+		Console.WriteLine(input);
+	}
+
+	public void run()
+	{
+		Del handler = DelegateMethod;
+		handler("hello world");
+	}
+```
+
+Hier zie je dat de handler die wordt geïnstantieerd aan een type kan worden toegekend. Dit betekend ook dat je functies door kunt gebruiken als argumenten voor een methode of klasse. 
+
+Het doet er voor de delegate niet toe wat voor type er wordt toegekend aan de  pointer. Alleen dat deze als input een string verwacht, en geen return type heeft (void).
+
+Dit doet je wellicht denken aan interfaces, die doen in principe het zelfde, de definitie wordt losgekoppeld van de implementatie. 
+
+Voorbeeld
+
+```csharp
+public delegate void WriteMessageDelegate(string message);
+
+public void WriteMessage(string message) => Console.WriteLine(message);
+public void WriteTimeMessage(string message) => Console.WriteLine($"{message} {DateTime.Now}");
+
+void Main()
+{
+	WriteMessageDelegate func = WriteMessage;
+
+	func("hello world");
+
+	func = WriteTimeMessage;
+	
+	func("hello timed message");
+}
+```
+
+En dit is ontzettend krachtig, je gaat hier van een design time implementatie naar een run time implementatie.  Je kunt de implementatie veranderen op basis van, bijvoorbeeld, user input. De naam, scope en parameter naam zijn hierbij niet van belang, en kunnen vrijelijk gevarieerd worden zonder dat de output veranderd
+
+ Qua functionaliteit is dit echter nog niets anders dan dat je ook met interfaces kan. Het GOF Strategy pattern is een mooi voorbeeld waar je deze functionaliteit ook gebruikt.
+
+# Func’s & actions
+
+Als je een delegate hebt met geen output (met andere woorden: een void methode), kun je deze ook definiëren als een Action. Als je een delegate hebt met output, kun je dit definieren als een Func. 
+
+De input parameters van een Action kun je vastleggen met generics. een Action<string> betekend dat je een delegate functie aan wil maken die een string als input neemt en geen output teruggeeft.
+
+```csharp
+public void WriteMessage(string message) => Console.WriteLine(message);
+public void WriteTimeMessage(string message) => Console.WriteLine($"{message} {DateTime.Now}");
+
+void Main()
+{
+	Action<string> action = WriteMessage;
+
+	action("hello world");
+
+	action = WriteTimeMessage;
+	
+	action("hello timely message");
+}
+```
+
+Voor Func delegate’s geef je in je generics de output parameter in de generics aan. Als je een functie hebt die ook input parameters heeft, dan definieer je dit door in de generics eerst de input parameters te zetten, en daarna de output parameter
+
+```csharp
+public bool ReturnTrue() => false;
+public bool ReturnFalse() => true;
+
+void Main()
+{
+    System.Func<bool> function = ReturnTrue;
+
+	function();
+
+	function = ReturnFalse;
+	
+	function();
+}
+
+```
+
+# Lambda functies
+
+een lambda is een notitie systeem voor functies die voortkomt uit de lambda calculus. 
+
+mathematische functie: f(x) = x^2
+
+lambda van deze functie: x → x^2
+
+Hier staat, je hebt  input x.  de output hiervan is x tot de macht 2. 
+
+in c# is dit de volgende code
+
+```csharp
+private double square(double value) ⇒ Math.Pow(value, 2);
+```
+
+De naam, scope en parameter naam van deze functie doen er niet doet. Daarom worden lambda’s ook wel “anonymous functions” genoemd
+
+```csharp
+void Main()
+{
+    Func<string, bool> func; 
+    
+    //return true when the input of the function is larger than 5
+    func = input => input.Length > 5 ? true: false;
+    
+    //alway return true; 
+    func = input => true;
+
+		Console.Writeline(func("hello world"))
+}
+```
+
+op deze  manier schrijf je de delegate in een pure lambda, zonder referentie naar een functie
+
+# Expression trees
+
+Je kent expression trees waarschijnlijk in de context van Linq. Linq gebruikt lamda expressions om een expression tree te maken die vervolgens gebruikt kan worden om een provider-specific query te maken.
+
+### Wat wordt er hier bedoeld met een provider?
+
+Een provider is het gedeelte wat na de “To” komt in “Linq to x”, zo heb je linq to sql, linq to xml en linq to objects. 
+
+een expressie staat los van de provider. Dit betekend dat een expressie volstrekt andere dingen kan betekenen in verschillende contexten.
+
+Linq gebruikt lambda expressies om een expression tree te bouwen. Deze kan dan gebruikt worden om een provider specific query te maken. IEnumerable wordt hierbij gebruikt voor LINQ to objects en IQueryable voor Linq To SQL. 
+
+Een expressie tree zelf doet NIETS het staat los van de implementatie. Het zijn de instructies om iets te doen, wat iets anders moet implementeren.
+
+## Soorten expressies
+
+In LINQpad kun je via de ‘tree’ tab zien hoe een expression tree eruit ziet. Veel van de verschillende onderdelen hiervan zijn gewone types in .NET die je kunt gebruiken.
+
+een voorbeeld:
+
+x > 5
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/96773a3b-43cd-4d55-abf3-9ac5d0df0b7c/2fe8bb57-0535-48f4-887e-106d1107c156/image.png)
+
+Als we deze expressie na willen maken in code kunnen we dat als volgt doen: 
+
+```csharp
+        static void Main(string[] args)
+        {
+            var xExpression = Expression.Parameter(typeof(int), "x");
+            var constantExpression = Expression.Constant(12);
+            var greaterThan = Expression.GreaterThan(xExpression, constantExpression);
+            
+            //xexpression wordt twee keer gedefinieerd omdat de lambda moet weten dat de Func<int,x> een int als parameter ontvangt.
+            var expression = Expression.Lambda<Func<int, bool>>(greaterThan, false, new List<ParameterExpression> { xExpression });
+            
+            var func = expression.Compile();
+
+            Console.WriteLine(func(5));
+        }
+```
+
+Je kunt deze expressie verder uitbreiden. Bijvoorbeeld met een or
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/96773a3b-43cd-4d55-abf3-9ac5d0df0b7c/f4a72aeb-5c83-4374-af3f-395ab276ef88/image.png)
+
+```csharp
+     static void Main(string[] args)
+   {
+       var xExpression = Expression.Parameter(typeof(int), "x");
+       var constantExpression = Expression.Constant(12);
+       var greaterThan = Expression.GreaterThan(xExpression, constantExpression);
+
+       var const1Expression = Expression.Constant(1);
+       var lessThan = Expression.LessThan(xExpression, const1Expression);
+
+       var or = Expression.Or(greaterThan, lessThan);
+
+       var expression = Expression.Lambda<Func<int, bool>>(or, false, new List<ParameterExpression> { xExpression });
+
+       //xexpression wordt twee keer gedefinieerd omdat de lambda moet weten dat de Func<int,x> een int als parameter ontvangt.
+
+       var func = expression.Compile();
+
+       Console.WriteLine(func(5));
+   }
+```
+
+Dit genereert een expressie die gelijk staat aan de bovenstaande boom. x > 5  | x < 1
