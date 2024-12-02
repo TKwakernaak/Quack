@@ -1,0 +1,30 @@
+  ```yaml
+   ---
+   title: "Introductie - source generators"
+   date: 2024-11-04 
+   ---
+   ```
+
+
+#Wat is een source generator
+
+Source generators zijn in 2020 geintroduceerd en zijn, zoals de naam al impliceert, makers van bron code. Het is een stuk
+code die tijdens het compileren van je applicatie wordt uitgevoerd, en kan je applicatie inspecteren en op basis van die 
+inspectie aanvullende code genereren die samen met de rest van je code wordt gecompileert. Als je bekend bent met roslyn analyzers, 
+source generators zijn analyzers die c# source code genereren.
+
+
+Een source generator
+- Ontvangt (INPUT) een "compileer" object, die een weergeven vormt van alle gebruikers code die wordt gecompileerd. Dit object
+kan geinspecteerd worden en je kan code schrijven die werkt met de syntax & met het semantische model van de code die gecompileert 
+wordt. Dit lijkt een beetje op 'analyzers' die je kan maken om code verbeteringen en tips te genereren.
+- Genereert (OUTPUT) bestanden die toegevoegd kunnen worden aan een "Compileer" object tijdens de compilatie. 
+
+De combinatie van deze twee zaken is handig, je kan de code van de gebruiker inspecteren, inclusief alle metadata die de compiler 
+hierbij genereerd.
+
+![compilation flow](/assets/images/2024-11-04-sourcegenerators.png)
+source: (https://devblogs.microsoft.com/dotnet/introducing-c-source-generators/)
+
+Runtime reflection is a powerful technology that was added to .NET a long time ago. There are countless scenarios for using it.
+ A very common scenario is to perform some analysis of user code when an app starts up and use that data to generate things.
